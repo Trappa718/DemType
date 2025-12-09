@@ -9,7 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
         }
 
         body {
@@ -27,6 +27,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .logo {
@@ -37,7 +38,7 @@
 
         .nav-tabs {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
@@ -63,57 +64,73 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1400px;
             width: 100%;
             margin: 30px auto;
             padding: 0 20px;
             flex: 1;
         }
 
-        .code-display {
+        .code-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .code-container {
+                flex-direction: column;
+            }
+        }
+
+        .code-panel {
+            flex: 1;
             background-color: #1e1e1e;
             border: 1px solid #333;
             border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            background-color: #252525;
+            border-bottom: 1px solid #333;
+            font-weight: bold;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .panel-content {
+            flex: 1;
             padding: 20px;
-            margin-bottom: 30px;
-            min-height: 200px;
-            position: relative;
             overflow: auto;
+        }
+
+        .code-preview {
+            font-size: 1rem;
+            line-height: 1.6;
+            white-space: pre;
+            color: #666;
+            margin: 0;
+            min-height: 300px;
         }
 
         .code-input {
             background-color: #222222;
             color: #e0e0e0;
             width: 100%;
-            min-height: 120px;
-            padding: 15px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            font-size: 1rem;
-            line-height: 1.5;
-            font-family: 'Consolas', 'Monaco', monospace;
-            resize: vertical;
+            height: 100%;
+            min-height: 300px;
+            border: none;
             outline: none;
-            white-space: pre;
-            overflow-wrap: normal;
-            overflow-x: auto;
-        }
-
-        .code-input::placeholder {
-            color: #888;
-        }
-
-        .code-preview {
-            font-family: 'Consolas', 'Monaco', monospace;
             font-size: 1rem;
-            line-height: 1.5;
+            line-height: 1.6;
             white-space: pre;
-            margin-bottom: 10px;
-            color: #888;
-            min-height: 150px;
-            padding: 10px;
-            border-radius: 4px;
-            background-color: #222;
+            resize: none;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            padding: 0;
         }
 
         .char {
@@ -234,6 +251,40 @@
         .builtin { color: #4ec9b0; }
         .parameter { color: #9cdcfe; }
 
+        /* Курсор */
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: #4dabf7;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: -1px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Скроллбар */
+        .panel-content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -247,6 +298,10 @@
             .stats {
                 flex-direction: column;
                 gap: 20px;
+            }
+            
+            .code-preview, .code-input {
+                min-height: 250px;
             }
         }
     </style>
@@ -266,11 +321,21 @@
     </header>
 
     <div class="container">
-        <div class="code-display">
-            <div class="code-preview" id="codePreview"></div>
-        </div>
+        <div class="code-container">
+            <div class="code-panel">
+                <div class="panel-header">Пример кода</div>
+                <div class="panel-content">
+                    <pre class="code-preview" id="codePreview"></pre>
+                </div>
+            </div>
 
-        <textarea class="code-input" id="codeInput" placeholder="Начните вводить код здесь..."></textarea>
+            <div class="code-panel">
+                <div class="panel-header">Введите код</div>
+                <div class="panel-content">
+                    <textarea class="code-input" id="codeInput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+                </div>
+            </div>
+        </div>
 
         <div class="message" id="message"></div>
 
@@ -287,16 +352,21 @@
                 <div class="stat-value" id="charsTyped">0</div>
                 <div class="stat-label">Символов введено</div>
             </div>
+            <div class="stat-item">
+                <div class="stat-value" id="errors">0</div>
+                <div class="stat-label">Ошибки</div>
+            </div>
         </div>
 
         <div class="controls">
             <button class="btn btn-primary" id="resetBtn">Сбросить</button>
             <button class="btn btn-secondary" id="hintBtn">Показать подсказку</button>
+            <button class="btn btn-secondary" id="cheatBtn">Показать ответ</button>
         </div>
     </div>
 
     <footer class="footer">
-        CodeTrainer - Тренажер для набора кода. Проверяет правильность написания кода на Python.
+        CodeTrainer - Тренажер для набора кода. Используйте Tab для вставки 4 пробелов.
     </footer>
 
     <script>
@@ -323,10 +393,12 @@
         const tabs = document.querySelectorAll('.tab');
         const resetBtn = document.getElementById('resetBtn');
         const hintBtn = document.getElementById('hintBtn');
+        const cheatBtn = document.getElementById('cheatBtn');
         const messageEl = document.getElementById('message');
         const accuracyEl = document.getElementById('accuracy');
         const progressEl = document.getElementById('progress');
         const charsTypedEl = document.getElementById('charsTyped');
+        const errorsEl = document.getElementById('errors');
 
         // Состояние приложения
         let currentTab = 'main';
@@ -335,6 +407,7 @@
         let currentIndex = 0;
         let correctChars = 0;
         let totalTyped = 0;
+        let errorCount = 0;
 
         // Инициализация приложения
         function init() {
@@ -351,6 +424,7 @@
             currentIndex = 0;
             correctChars = 0;
             totalTyped = 0;
+            errorCount = 0;
             
             // Обновление активной вкладки
             tabs.forEach(tab => {
@@ -528,6 +602,8 @@
             });
             
             hintBtn.addEventListener('click', showHint);
+            
+            cheatBtn.addEventListener('click', showAnswer);
         }
 
         // Обработка ввода текста
@@ -537,15 +613,40 @@
             
             // Проверка каждого символа
             let newCorrectChars = 0;
+            let newErrorCount = 0;
             let newTotalTyped = Math.min(input.length, original.length);
             
             for (let i = 0; i < newTotalTyped; i++) {
-                if (i < original.length && input[i] === original[i]) {
+                // Получаем символы для сравнения
+                const inputChar = input[i];
+                const originalChar = original[i];
+                
+                // Проверяем соответствие символов
+                if (inputChar === originalChar) {
                     newCorrectChars++;
+                } else {
+                    newErrorCount++;
+                    
+                    // Проверяем специальные случаи
+                    if (originalChar === '\t' && inputChar === ' ') {
+                        // Проверяем, не ввел ли пользователь 4 пробела вместо таба
+                        if (i + 3 < input.length && input.substring(i, i + 4) === '    ') {
+                            // Да, ввел 4 пробела - считаем правильным
+                            newCorrectChars += 4;
+                            newErrorCount--; // Отменяем ошибку
+                            i += 3; // Пропускаем следующие 3 символа
+                            continue;
+                        }
+                    } else if (originalChar === ' ' && inputChar === '\t') {
+                        // Пользователь ввел таб вместо пробела
+                        newErrorCount--; // Не считаем это ошибкой
+                        newCorrectChars++; // Считаем правильным
+                    }
                 }
             }
             
             correctChars = newCorrectChars;
+            errorCount = newErrorCount;
             totalTyped = newTotalTyped;
             userInput = input;
             currentIndex = input.length;
@@ -600,10 +701,26 @@
                 
                 if (i < userInput.length) {
                     // Сравниваем введенный символ с оригинальным
-                    if (userInput[i] === char) {
+                    const inputChar = userInput[i];
+                    
+                    // Проверяем соответствие
+                    if (inputChar === char) {
                         charClass += ' correct';
                     } else {
-                        charClass += ' incorrect';
+                        // Проверяем специальные случаи
+                        if (char === '\t' && inputChar === ' ') {
+                            // Проверяем, не ввел ли пользователь 4 пробела вместо таба
+                            if (i + 3 < userInput.length && userInput.substring(i, i + 4) === '    ') {
+                                charClass += ' correct';
+                            } else {
+                                charClass += ' incorrect';
+                            }
+                        } else if (char === ' ' && inputChar === '\t') {
+                            // Таб вместо пробела - тоже допустимо
+                            charClass += ' correct';
+                        } else {
+                            charClass += ' incorrect';
+                        }
                     }
                 }
                 
@@ -624,13 +741,15 @@
             
             // Добавляем оставшуюся часть кода
             if (userInput.length < code.length) {
+                // Добавляем курсор в текущей позиции
+                html += `<span class="char current"><span class="cursor"></span></span>`;
                 html += `<span class="char">${code.substring(userInput.length)}</span>`;
             }
             
-            // Восстанавливаем подсветку синтаксиса
+            // Обновляем предпросмотр
             codePreview.innerHTML = html;
             
-            // Применяем подсветку синтаксиса поверх подсветки ввода
+            // Восстанавливаем подсветку синтаксиса
             applySyntaxHighlighting();
         }
 
@@ -652,6 +771,9 @@
             
             // Введено символов
             charsTypedEl.textContent = userInput.length;
+            
+            // Ошибки
+            errorsEl.textContent = errorCount;
         }
 
         // Показать сообщение
@@ -682,6 +804,14 @@
             };
             
             showMessage(`Подсказка: ${hints[currentTab]}`, 'success');
+        }
+
+        // Показать ответ
+        function showAnswer() {
+            codeInput.value = originalCode;
+            const event = new Event('input');
+            codeInput.dispatchEvent(event);
+            showMessage('Весь код вставлен. Теперь вы можете посмотреть правильный вариант.', 'success');
         }
 
         // Запуск приложения
