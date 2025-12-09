@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Typing Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #181818;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #121212;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4dabf7;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background-color: #252525;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background-color: #2d2d2d;
+        }
+
+        .tab.active {
+            background-color: #4dabf7;
+            color: #121212;
+            border-color: #4dabf7;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 30px auto;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .code-display {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 200px;
+            position: relative;
+            overflow: auto;
+        }
+
+        .code-input {
+            background-color: #222222;
+            color: #e0e0e0;
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            font-size: 1rem;
+            line-height: 1.5;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
+            outline: none;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+
+        .code-input::placeholder {
+            color: #888;
+        }
+
+        .code-preview {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            white-space: pre;
+            margin-bottom: 10px;
+            color: #888;
+            min-height: 150px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #222;
+        }
+
+        .char {
+            position: relative;
+        }
+
+        .char.correct {
+            color: #4CAF50;
+        }
+
+        .char.incorrect {
+            color: #f44336;
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .char.current {
+            background-color: rgba(77, 171, 247, 0.2);
+            border-bottom: 2px solid #4dabf7;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4dabf7;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4dabf7;
+            color: #121212;
+        }
+
+        .btn-primary:hover {
+            background-color: #3b99e6;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .message.success {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+            display: block;
+        }
+
+        .message.error {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid #f44336;
+            display: block;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #333;
+            margin-top: 30px;
+        }
+
+        /* Синтаксическая подсветка для Python */
+        .keyword { color: #569cd6; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+        .operator { color: #d4d4d4; }
+        .bracket { color: #ffd700; }
+        .builtin { color: #4ec9b0; }
+        .parameter { color: #9cdcfe; }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-tabs {
+                justify-content: center;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">CodeTrainer</div>
+        <nav class="nav-tabs">
+            <div class="tab active" data-tab="main">main</div>
+            <div class="tab" data-tab="add_record">add_record</div>
+            <div class="tab" data-tab="delete_record">delete_record</div>
+            <div class="tab" data-tab="refresh">refresh</div>
+            <div class="tab" data-tab="login">login</div>
+            <div class="tab" data-tab="get_data">get_data</div>
+            <div class="tab" data-tab="show_data">show_data</div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="code-display">
+            <div class="code-preview" id="codePreview"></div>
+        </div>
+
+        <textarea class="code-input" id="codeInput" placeholder="Начните вводить код здесь..."></textarea>
+
+        <div class="message" id="message"></div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Точность</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="progress">0%</div>
+                <div class="stat-label">Прогресс</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="charsTyped">0</div>
+                <div class="stat-label">Символов введено</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="resetBtn">Сбросить</button>
+            <button class="btn btn-secondary" id="hintBtn">Показать подсказку</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        CodeTrainer - Тренажер для набора кода. Проверяет правильность написания кода на Python.
+    </footer>
+
+    <script>
+        // Данные с примерами кода для разных вкладок
+        const codeExamples = {
+            main: `def main():\n    # Инициализация приложения\n    app = initialize_app()\n    \n    # Запуск основного цикла\n    try:\n        app.run()\n    except KeyboardInterrupt:\n        print("Приложение остановлено пользователем")\n    finally:\n        app.cleanup()`,
+            
+            add_record: `def add_record(database, record):\n    """Добавляет запись в базу данных"""\n    if not isinstance(record, dict):\n        raise TypeError("Запись должна быть словарем")\n    \n    # Проверка обязательных полей\n    required_fields = ['id', 'name', 'created_at']\n    for field in required_fields:\n        if field not in record:\n            raise ValueError(f"Отсутствует обязательное поле: {field}")\n    \n    # Добавление временной метки\n    record['added_at'] = datetime.now()\n    \n    # Вставка в базу данных\n    with database.get_connection() as conn:\n        cursor = conn.cursor()\n        cursor.execute(\n            "INSERT INTO records VALUES (:id, :name, :created_at, :added_at)",\n            record\n        )\n        conn.commit()\n    \n    return record['id']`,
+            
+            delete_record: `def delete_record(database, record_id):\n    """Удаляет запись по идентификатору"""\n    if not isinstance(record_id, int) or record_id <= 0:\n        raise ValueError("ID записи должен быть положительным целым числом")\n    \n    # Проверка существования записи\n    with database.get_connection() as conn:\n        cursor = conn.cursor()\n        cursor.execute("SELECT id FROM records WHERE id = ?", (record_id,))\n        existing = cursor.fetchone()\n        \n        if not existing:\n            raise LookupError(f"Запись с ID {record_id} не найдена")\n        \n        # Удаление записи\n        cursor.execute("DELETE FROM records WHERE id = ?", (record_id,))\n        conn.commit()\n    \n    return True`,
+            
+            refresh: `def refresh(data_source, force=False):\n    """Обновляет данные из источника"""\n    # Проверка кэша\n    last_update = get_last_update_time(data_source)\n    current_time = time.time()\n    \n    if not force and current_time - last_update < CACHE_TIMEOUT:\n        print("Используются кэшированные данные")\n        return get_cached_data(data_source)\n    \n    try:\n        # Загрузка новых данных\n        new_data = data_source.load()\n        \n        # Валидация данных\n        if not validate_data(new_data):\n            raise ValueError("Полученные данные не прошли валидацию")\n        \n        # Обновление кэша\n        update_cache(data_source, new_data)\n        set_last_update_time(data_source, current_time)\n        \n        print(f"Данные из {data_source.name} успешно обновлены")\n        return new_data\n        \n    except ConnectionError as e:\n        print(f"Ошибка подключения: {e}")\n        return get_cached_data(data_source)`,
+            
+            login: `def login(username, password, remember_me=False):\n    """Аутентификация пользователя"""\n    # Проверка входных данных\n    if not username or not password:\n        raise ValueError("Имя пользователя и пароль обязательны")\n    \n    # Защита от слишком частых попыток входа\n    if is_login_blocked(username):\n        raise PermissionError("Слишком много попыток входа. Попробуйте позже.")\n    \n    # Поиск пользователя в базе данных\n    user = find_user_by_username(username)\n    \n    if not user:\n        log_failed_attempt(username)\n        raise AuthenticationError("Неверное имя пользователя или пароль")\n    \n    # Проверка пароля\n    password_hash = hash_password(password, user.salt)\n    if password_hash != user.password_hash:\n        log_failed_attempt(username)\n        raise AuthenticationError("Неверное имя пользователя или пароль")\n    \n    # Создание сессии\n    session = create_session(user.id, remember_me)\n    \n    # Сброс счетчика неудачных попыток\n    reset_failed_attempts(username)\n    \n    # Логирование успешного входа\n    log_successful_login(user.id)\n    \n    return session`,
+            
+            get_data: `def get_data(endpoint, params=None, timeout=30):\n    """Получает данные из API"""\n    # Формирование URL\n    base_url = config.API_BASE_URL\n    url = f"{base_url}/{endpoint}"\n    \n    # Добавление параметров запроса\n    if params:\n        query_string = urlencode(params)\n        url = f"{url}?{query_string}"\n    \n    # Настройка заголовков\n    headers = {\n        'User-Agent': 'CodeTrainer/1.0',\n        'Accept': 'application/json'\n    }\n    \n    # Добавление авторизации, если требуется\n    if is_authenticated():\n        token = get_auth_token()\n        headers['Authorization'] = f'Bearer {token}'\n    \n    try:\n        # Выполнение запроса\n        response = requests.get(\n            url,\n            headers=headers,\n            timeout=timeout\n        )\n        \n        # Проверка статуса ответа\n        response.raise_for_status()\n        \n        # Парсинг JSON\n        data = response.json()\n        \n        # Валидация структуры данных\n        validate_response_structure(data)\n        \n        return data\n        \n    except requests.exceptions.Timeout:\n        raise TimeoutError(f"Превышено время ожидания ({timeout} секунд)")\n    except requests.exceptions.HTTPError as e:\n        raise ConnectionError(f"HTTP ошибка: {e.response.status_code}")\n    except json.JSONDecodeError:\n        raise ValueError("Некорректный JSON в ответе")`,
+            
+            show_data: `def show_data(data, format='table', max_rows=100):\n    """Отображает данные в выбранном формате"""\n    if not data:\n        print("Нет данных для отображения")\n        return\n    \n    # Ограничение количества строк\n    if len(data) > max_rows:\n        print(f"Показаны первые {max_rows} из {len(data)} строк")\n        data = data[:max_rows]\n    \n    if format == 'table':\n        # Отображение в виде таблицы\n        headers = list(data[0].keys())\n        \n        # Вычисление ширины столбцов\n        col_widths = {}\n        for header in headers:\n            max_len = len(header)\n            for row in data:\n                cell_value = str(row.get(header, ''))\n                max_len = max(max_len, len(cell_value))\n            col_widths[header] = max_len + 2  # Добавляем отступы\n        \n        # Вывод заголовков\n        header_line = ""\n        separator_line = ""\n        for header in headers:\n            width = col_widths[header]\n            header_line += header.ljust(width)\n            separator_line += "-" * width\n        \n        print(header_line)\n        print(separator_line)\n        \n        # Вывод данных\n        for row in data:\n            row_line = ""\n            for header in headers:\n                width = col_widths[header]\n                cell_value = str(row.get(header, ''))\n                row_line += cell_value.ljust(width)\n            print(row_line)\n    \n    elif format == 'json':\n        # Отображение в формате JSON\n        print(json.dumps(data, indent=2, ensure_ascii=False))\n    \n    else:\n        raise ValueError(f"Неподдерживаемый формат: {format}")`
+        };
+
+        // Элементы DOM
+        const codePreview = document.getElementById('codePreview');
+        const codeInput = document.getElementById('codeInput');
+        const tabs = document.querySelectorAll('.tab');
+        const resetBtn = document.getElementById('resetBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const messageEl = document.getElementById('message');
+        const accuracyEl = document.getElementById('accuracy');
+        const progressEl = document.getElementById('progress');
+        const charsTypedEl = document.getElementById('charsTyped');
+
+        // Состояние приложения
+        let currentTab = 'main';
+        let originalCode = '';
+        let userInput = '';
+        let currentIndex = 0;
+        let correctChars = 0;
+        let totalTyped = 0;
+
+        // Инициализация приложения
+        function init() {
+            loadTab(currentTab);
+            setupEventListeners();
+            updateStats();
+        }
+
+        // Загрузка кода для выбранной вкладки
+        function loadTab(tabName) {
+            currentTab = tabName;
+            originalCode = codeExamples[tabName];
+            userInput = '';
+            currentIndex = 0;
+            correctChars = 0;
+            totalTyped = 0;
+            
+            // Обновление активной вкладки
+            tabs.forEach(tab => {
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Отображение кода
+            renderCodePreview();
+            codeInput.value = '';
+            codeInput.focus();
+            
+            // Сброс сообщений
+            clearMessage();
+            updateStats();
+        }
+
+        // Рендеринг предварительного просмотра кода с подсветкой синтаксиса
+        function renderCodePreview() {
+            let html = '';
+            const code = originalCode;
+            
+            // Простая подсветка синтаксиса Python
+            const lines = code.split('\n');
+            
+            for (let line of lines) {
+                let lineHtml = '';
+                let inString = false;
+                let stringChar = '';
+                let inComment = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    const nextChar = i < line.length - 1 ? line[i + 1] : '';
+                    
+                    // Обработка комментариев
+                    if (!inString && char === '#') {
+                        lineHtml += `<span class="comment">${line.substring(i)}</span>`;
+                        break;
+                    }
+                    
+                    // Обработка строк
+                    if (!inComment && (char === '"' || char === "'")) {
+                        if (!inString) {
+                            inString = true;
+                            stringChar = char;
+                            lineHtml += `<span class="string">${char}`;
+                        } else if (char === stringChar) {
+                            // Проверка на экранирование
+                            let escapeCount = 0;
+                            let j = i - 1;
+                            while (j >= 0 && line[j] === '\\') {
+                                escapeCount++;
+                                j--;
+                            }
+                            
+                            if (escapeCount % 2 === 0) {
+                                inString = false;
+                                lineHtml += `${char}</span>`;
+                            } else {
+                                lineHtml += char;
+                            }
+                        } else {
+                            lineHtml += char;
+                        }
+                        continue;
+                    }
+                    
+                    if (inString) {
+                        lineHtml += char;
+                        continue;
+                    }
+                    
+                    // Ключевые слова Python
+                    const keywords = ['def', 'return', 'if', 'else', 'elif', 'for', 'while', 'try', 'except', 'finally', 'with', 'as', 'import', 'from', 'class', 'raise', 'in', 'is', 'and', 'or', 'not', 'True', 'False', 'None'];
+                    
+                    // Проверка на ключевые слова
+                    let isKeyword = false;
+                    for (const keyword of keywords) {
+                        const keywordLength = keyword.length;
+                        if (i + keywordLength <= line.length && 
+                            line.substring(i, i + keywordLength) === keyword &&
+                            (i + keywordLength >= line.length || !/\w/.test(line[i + keywordLength])) &&
+                            (i === 0 || !/\w/.test(line[i - 1]))) {
+                            
+                            lineHtml += `<span class="keyword">${keyword}</span>`;
+                            i += keywordLength - 1;
+                            isKeyword = true;
+                            break;
+                        }
+                    }
+                    
+                    if (isKeyword) continue;
+                    
+                    // Встроенные функции
+                    const builtins = ['print', 'len', 'str', 'int', 'float', 'list', 'dict', 'set', 'range', 'type', 'isinstance', 'raise', 'open'];
+                    
+                    // Проверка на встроенные функции
+                    let isBuiltin = false;
+                    for (const builtin of builtins) {
+                        const builtinLength = builtin.length;
+                        if (i + builtinLength <= line.length && 
+                            line.substring(i, i + builtinLength) === builtin &&
+                            (i + builtinLength >= line.length || line[i + builtinLength] === '(') &&
+                            (i === 0 || !/\w/.test(line[i - 1]))) {
+                            
+                            lineHtml += `<span class="builtin">${builtin}</span>`;
+                            i += builtinLength - 1;
+                            isBuiltin = true;
+                            break;
+                        }
+                    }
+                    
+                    if (isBuiltin) continue;
+                    
+                    // Числа
+                    if (/\d/.test(char) && (i === 0 || !/\w/.test(line[i - 1]))) {
+                        let num = char;
+                        let j = i + 1;
+                        while (j < line.length && /\d/.test(line[j])) {
+                            num += line[j];
+                            j++;
+                        }
+                        lineHtml += `<span class="number">${num}</span>`;
+                        i = j - 1;
+                        continue;
+                    }
+                    
+                    // Операторы
+                    const operators = ['+', '-', '*', '/', '%', '=', '==', '!=', '<', '>', '<=', '>=', '+=', '-=', '*=', '/=', '%='];
+                    if (operators.includes(char) || (i < line.length - 1 && operators.includes(char + nextChar))) {
+                        const op = operators.includes(char + nextChar) ? char + nextChar : char;
+                        lineHtml += `<span class="operator">${op}</span>`;
+                        if (op.length > 1) i++;
+                        continue;
+                    }
+                    
+                    // Скобки
+                    if (['(', ')', '[', ']', '{', '}'].includes(char)) {
+                        lineHtml += `<span class="bracket">${char}</span>`;
+                        continue;
+                    }
+                    
+                    // Обычный символ
+                    lineHtml += char;
+                }
+                
+                // Добавляем текущую строку
+                html += lineHtml + '\n';
+            }
+            
+            codePreview.innerHTML = html;
+        }
+
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Переключение вкладок
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    loadTab(tab.dataset.tab);
+                });
+            });
+            
+            // Ввод текста
+            codeInput.addEventListener('input', handleInput);
+            codeInput.addEventListener('keydown', handleKeyDown);
+            
+            // Кнопки управления
+            resetBtn.addEventListener('click', () => {
+                loadTab(currentTab);
+                showMessage('Тренировка сброшена. Начните заново.', 'success');
+            });
+            
+            hintBtn.addEventListener('click', showHint);
+        }
+
+        // Обработка ввода текста
+        function handleInput(e) {
+            const input = codeInput.value;
+            const original = originalCode;
+            
+            // Проверка каждого символа
+            let newCorrectChars = 0;
+            let newTotalTyped = Math.min(input.length, original.length);
+            
+            for (let i = 0; i < newTotalTyped; i++) {
+                if (i < original.length && input[i] === original[i]) {
+                    newCorrectChars++;
+                }
+            }
+            
+            correctChars = newCorrectChars;
+            totalTyped = newTotalTyped;
+            userInput = input;
+            currentIndex = input.length;
+            
+            // Обновление предпросмотра
+            updateCodePreview();
+            updateStats();
+            
+            // Проверка завершения
+            if (input === original) {
+                showMessage('Поздравляем! Вы успешно набрали весь код.', 'success');
+            }
+        }
+
+        // Обработка специальных клавиш
+        function handleKeyDown(e) {
+            // Tab key - вставляет 4 пробела
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                
+                const start = codeInput.selectionStart;
+                const end = codeInput.selectionEnd;
+                const value = codeInput.value;
+                
+                // Вставляем 4 пробела
+                codeInput.value = value.substring(0, start) + '    ' + value.substring(end);
+                
+                // Устанавливаем позицию курсора после вставленных пробелов
+                codeInput.selectionStart = codeInput.selectionEnd = start + 4;
+                
+                // Запускаем обработку ввода
+                const event = new Event('input');
+                codeInput.dispatchEvent(event);
+            }
+            
+            // Escape key - сбрасывает ввод
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                loadTab(currentTab);
+            }
+        }
+
+        // Обновление предпросмотра кода с подсветкой ввода
+        function updateCodePreview() {
+            const code = originalCode;
+            let html = '';
+            
+            // Разбиваем код на символы для подсветки
+            for (let i = 0; i < code.length; i++) {
+                const char = code[i];
+                let charClass = 'char';
+                
+                if (i < userInput.length) {
+                    // Сравниваем введенный символ с оригинальным
+                    if (userInput[i] === char) {
+                        charClass += ' correct';
+                    } else {
+                        charClass += ' incorrect';
+                    }
+                }
+                
+                if (i === userInput.length) {
+                    charClass += ' current';
+                }
+                
+                // Обрабатываем специальные символы
+                let displayChar = char;
+                if (char === ' ') {
+                    displayChar = '·';  // Показываем пробелы
+                } else if (char === '\t') {
+                    displayChar = '→   ';  // Показываем табуляции
+                }
+                
+                html += `<span class="${charClass}">${displayChar}</span>`;
+            }
+            
+            // Добавляем оставшуюся часть кода
+            if (userInput.length < code.length) {
+                html += `<span class="char">${code.substring(userInput.length)}</span>`;
+            }
+            
+            // Восстанавливаем подсветку синтаксиса
+            codePreview.innerHTML = html;
+            
+            // Применяем подсветку синтаксиса поверх подсветки ввода
+            applySyntaxHighlighting();
+        }
+
+        // Применяет подсветку синтаксиса поверх подсветки ввода
+        function applySyntaxHighlighting() {
+            // Эта функция может быть расширена для более сложной подсветки
+            // В текущей реализации используется простая подсветка, примененная в renderCodePreview
+        }
+
+        // Обновление статистики
+        function updateStats() {
+            // Точность
+            const accuracy = totalTyped > 0 ? Math.round((correctChars / totalTyped) * 100) : 100;
+            accuracyEl.textContent = `${accuracy}%`;
+            
+            // Прогресс
+            const progress = originalCode.length > 0 ? Math.round((userInput.length / originalCode.length) * 100) : 0;
+            progressEl.textContent = `${progress}%`;
+            
+            // Введено символов
+            charsTypedEl.textContent = userInput.length;
+        }
+
+        // Показать сообщение
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            
+            // Автоматически скрыть сообщение через 3 секунды
+            setTimeout(clearMessage, 3000);
+        }
+
+        // Очистить сообщение
+        function clearMessage() {
+            messageEl.textContent = '';
+            messageEl.className = 'message';
+        }
+
+        // Показать подсказку
+        function showHint() {
+            const hints = {
+                main: "Функция main() обычно является точкой входа в приложение.",
+                add_record: "Эта функция добавляет запись в базу данных с проверкой обязательных полей.",
+                delete_record: "Функция удаляет запись по ID с предварительной проверкой существования.",
+                refresh: "Функция обновляет данные из источника с использованием кэширования.",
+                login: "Реализует аутентификацию пользователя с защитой от частых попыток входа.",
+                get_data: "Получает данные из API с обработкой ошибок и таймаутами.",
+                show_data: "Отображает данные в различных форматах (таблица, JSON)."
+            };
+            
+            showMessage(`Подсказка: ${hints[currentTab]}`, 'success');
+        }
+
+        // Запуск приложения
+        init();
+    </script>
+</body>
+</html>
